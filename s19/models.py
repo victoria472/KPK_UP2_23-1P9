@@ -40,7 +40,7 @@ class Resource(BaseModel):
     total_quantity = IntegerField(constraints=[Check('total_quantity >= 1')], default=1)
     available_quantity = IntegerField(constraints=[Check('available_quantity >= 0')], default=1)
     unit = CharField(max_length=10, choices=['шт', 'компл', 'экз'], default='шт')
-    status = CharField(max_length=20, choices=['available', 'maintenance', 'retired'], default='available')
+    status = CharField(max_length=11, choices=['available', 'maintenance', 'retired'], default='available')
     is_active = BooleanField(default=True)
     created_at = DateTimeField(default=datetime.now)
     updated_at = DateTimeField(default=datetime.now)
@@ -73,7 +73,7 @@ class ResourceReservation(BaseModel):
     start_time = DateTimeField()
     end_time = DateTimeField()
     purpose = TextField(null=True)
-    status = CharField(max_length=20, choices=['active', 'completed', 'cancelled'], default='active')
+    status = CharField(max_length=11, choices=['active', 'completed', 'cancelled'], default='active')
     created_at = DateTimeField(default=datetime.now)
 
     class Meta:
