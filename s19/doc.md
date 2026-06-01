@@ -1,4 +1,4 @@
-# Сервис пула ресурсов (Resource Pool Service)
+# Вариант 19 — Resource Pool Service (Сервис пула ресурсов)
 
 ## Описание сервиса
 Сервис предназначен для учёта ресурсов (спортивный инвентарь, библиотечные фонды, передвижные лаборатории и т.п.), их категорий и бронирований. Реализует базовые CRUD операции над ресурсами.
@@ -53,7 +53,7 @@
 
 ### 3. Удаление ресурса по ID
 
-- **Возвращает**: `true`, если ресурс был удалён (физически удалена запись), иначе `false`.
+Вернёт `true`, если ресурс был деактивирован (`is_active = false`), иначе `false`. Физически запись из БД не удаляется.
 
 ### 4. Получение ресурса по ID
 
@@ -90,43 +90,4 @@
 
 ## ER-диаграмма
 
-```mermaid
-erDiagram
-    ResourceCategory {
-        int id PK
-        string name UK
-        string description
-    }
-    
-    Resource {
-        int id PK
-        string name
-        string description
-        int category_id FK
-        int total_quantity
-        int available_quantity
-        string unit
-        string status
-        datetime created_at
-        datetime updated_at
-    }
-    
-    User {
-        int id PK
-        string username UK
-        string email
-    }
-    
-    ResourceReservation {
-        int id PK
-        int resource_id FK
-        int reserved_by FK
-        datetime start_time
-        datetime end_time
-        string purpose
-        string status
-    }
-    
-    ResourceCategory ||--o{ Resource : "содержит"
-    Resource ||--o{ ResourceReservation : "бронируется"
-    User ||--o{ ResourceReservation : "создаёт"
+![ER-диаграмма](erd.png)

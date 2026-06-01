@@ -1,8 +1,7 @@
-import os
 from datetime import datetime
 from peewee import (
     SqliteDatabase, Model, AutoField, CharField, TextField, IntegerField,
-    ForeignKeyField, DateTimeField, Check, fn
+    ForeignKeyField, DateTimeField, BooleanField, Check
 )
 
 # Инициализация БД
@@ -17,7 +16,7 @@ class BaseModel(Model):
 class ResourceCategory(BaseModel):
     id = AutoField(primary_key=True)
     name = CharField(max_length=100, unique=True, constraints=[Check("length(name) >= 1")])
-    description = TextField(null=True)
+    description = CharField(max_length=500, null=True)
 
     class Meta:
         table_name = 'resource_categories'
@@ -36,11 +35,13 @@ class User(BaseModel):
 class Resource(BaseModel):
     id = AutoField(primary_key=True)
     name = CharField(max_length=100, constraints=[Check("length(name) >= 1")])
-    description = TextField(null=True)
+    description = CharField(max_length=500, null=True)
     category = ForeignKeyField(ResourceCategory, backref='resources', on_delete='RESTRICT')
     total_quantity = IntegerField(constraints=[Check('total_quantity >= 1')], default=1)
+    available_quantity = IntegerField(constraints=[Check('available_quantity >= 0')], default=1)
     unit = CharField(max_length=10, choices=['шт', 'компл', 'экз'], default='шт')
     status = CharField(max_length=20, choices=['available', 'maintenance', 'retired'], default='available')
+    is_active = BooleanField(default=True)
     created_at = DateTimeField(default=datetime.now)
     updated_at = DateTimeField(default=datetime.now)
 
@@ -54,18 +55,13 @@ class Resource(BaseModel):
         self.updated_at = datetime.now()
         return super().save(*args, **kwargs)
 
-    @property
-    def available_quantity(self):
-        """Вычисляемое поле: общее количество минус забронированные активные"""
-        active_reservations = (ResourceReservation
-                               .select(fn.SUM(ResourceReservation.quantity))
-                               .where(
-                                   (ResourceReservation.resource == self) &
-                                   (ResourceReservation.status == 'active') &
-                                   (ResourceReservation.end_time > datetime.now())
-                               )
-                               .scalar() or 0)
-        return self.total_quantity - active_reservations
+    @classmethod
+    def soft_delete(cls, resource_id):
+        """Мягкое удаление: is_active = False. Возвращает True если деактивировано, иначе False."""
+        updated = cls.update(is_active=False).where(
+            (cls.id == resource_id) & (cls.is_active == True)
+        ).execute()
+        return updated > 0
 
 
 class ResourceReservation(BaseModel):
